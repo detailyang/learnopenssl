@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     const SSL_CIPHER 	*c;
 
     if (argc < 2) {
-	printf("Usage: ./client host port");	
+	printf("Usage: ./client host port\r\n");	
 	exit(1);
     }
   
