@@ -1,0 +1,80 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+    Signature Algorithm: sha256WithRSAEncryption
+        Issuer: CN=ca
+        Validity
+            Not Before: Jan 14 13:35:11 2017 GMT
+            Not After : Jan 13 13:35:11 2021 GMT
+        Subject: C=US, ST=California, L=Mountain View, O=Blackbox Inc, CN=server
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:d5:a7:e1:5c:9b:57:54:17:8e:8d:68:60:57:62:
+                    4e:bd:cf:68:8e:ee:25:20:d9:0c:7a:74:a4:c5:02:
+                    c1:65:d0:1a:e1:70:f5:62:7e:2b:12:04:e7:4b:ef:
+                    92:2b:a5:bb:e6:ac:32:36:ee:a8:e5:2e:e0:3e:6e:
+                    0e:f0:43:5f:20:74:c7:6d:64:0c:ac:71:c2:51:84:
+                    ed:a1:39:e4:46:67:4e:e7:7b:d4:b4:41:18:33:8d:
+                    f2:a0:12:7f:59:e1:76:35:3e:bd:e3:b5:4e:a8:cf:
+                    b5:6b:3d:c2:4c:8c:2a:03:12:af:c2:dc:5e:0d:7d:
+                    16:d8:50:5d:a1:52:c1:cf:f0:5c:c8:2d:fc:66:c8:
+                    a9:1c:19:61:f4:fc:fd:89:44:b9:9b:be:eb:e0:1f:
+                    5b:32:ae:6d:e6:77:fc:c4:42:5f:af:4d:c6:50:d5:
+                    14:c7:a3:69:2c:fc:ed:98:ab:bc:d1:37:e2:99:15:
+                    96:a9:4d:b7:85:ea:cd:f2:dd:31:12:46:46:9f:87:
+                    b5:07:46:4e:97:29:0b:9d:31:f6:84:2c:19:18:61:
+                    35:0a:6f:da:93:6a:55:45:00:18:52:58:f4:2a:cd:
+                    ef:25:93:50:99:de:36:2c:56:de:43:e0:56:38:1b:
+                    5c:6f:a3:9a:11:88:74:13:08:84:56:38:33:25:51:
+                    98:e9
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                OpenSSL Generated Certificate
+            X509v3 Subject Key Identifier: 
+                54:E9:3B:14:66:EB:38:9D:6A:46:ED:3A:2E:A0:11:2F:1B:FE:15:C9
+            X509v3 Authority Key Identifier: 
+                keyid:EC:5F:EB:AB:2A:1C:71:35:47:5E:B4:DD:0D:50:96:1D:3E:00:02:AB
+
+    Signature Algorithm: sha256WithRSAEncryption
+         68:28:27:3d:91:40:39:ed:e1:75:ee:34:99:cb:11:05:cc:7b:
+         ad:8f:43:32:1d:7a:f7:01:71:28:9f:b0:db:37:05:de:e0:fb:
+         3c:c7:33:69:62:15:34:e1:c7:ac:32:d0:34:66:3d:b7:72:27:
+         4f:85:2b:e4:c7:46:f7:ff:8d:cb:85:a8:0f:75:0b:5a:99:48:
+         2f:bf:b2:27:c5:17:29:fa:d9:7d:ef:ad:d9:98:ad:32:06:9f:
+         e9:68:ff:01:dc:a1:20:fc:ac:c4:79:98:18:45:03:14:b5:92:
+         7d:6d:e2:44:bd:81:9f:be:63:fe:21:e9:23:14:82:2d:f1:e3:
+         35:e9:ef:96:db:b0:75:6b:05:9e:dd:42:62:9e:f5:64:5f:b1:
+         00:9b:94:0b:7d:f1:fd:1e:c1:01:af:6e:b7:2d:0a:33:af:fc:
+         0a:b8:67:e1:d0:a1:77:9f:82:7f:53:a6:9d:72:ae:c5:ef:c5:
+         be:ce:ad:1a:45:d7:67:d3:ba:df:a1:bb:2a:c2:d5:e9:c0:dd:
+         10:a8:e6:e1:24:ae:0e:10:55:98:b9:db:ac:ca:06:91:0f:48:
+         8d:a1:7c:a3:8b:5c:45:c3:6a:7e:13:b9:b3:c5:81:90:2a:d6:
+         3b:64:a4:00:bd:f3:7d:54:b9:fb:cb:c8:c7:13:4f:1c:b8:10:
+         75:17:25:a1
+-----BEGIN CERTIFICATE-----
+MIIDZTCCAk2gAwIBAgIBATANBgkqhkiG9w0BAQsFADANMQswCQYDVQQDDAJjYTAe
+Fw0xNzAxMTQxMzM1MTFaFw0yMTAxMTMxMzM1MTFaMGIxCzAJBgNVBAYTAlVTMRMw
+EQYDVQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1Nb3VudGFpbiBWaWV3MRUwEwYD
+VQQKDAxCbGFja2JveCBJbmMxDzANBgNVBAMMBnNlcnZlcjCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBANWn4VybV1QXjo1oYFdiTr3PaI7uJSDZDHp0pMUC
+wWXQGuFw9WJ+KxIE50vvkiulu+asMjbuqOUu4D5uDvBDXyB0x21kDKxxwlGE7aE5
+5EZnTud71LRBGDON8qASf1nhdjU+veO1TqjPtWs9wkyMKgMSr8LcXg19FthQXaFS
+wc/wXMgt/GbIqRwZYfT8/YlEuZu+6+AfWzKubeZ3/MRCX69NxlDVFMejaSz87Zir
+vNE34pkVlqlNt4XqzfLdMRJGRp+HtQdGTpcpC50x9oQsGRhhNQpv2pNqVUUAGFJY
+9CrN7yWTUJneNixW3kPgVjgbXG+jmhGIdBMIhFY4MyVRmOkCAwEAAaN7MHkwCQYD
+VR0TBAIwADAsBglghkgBhvhCAQ0EHxYdT3BlblNTTCBHZW5lcmF0ZWQgQ2VydGlm
+aWNhdGUwHQYDVR0OBBYEFFTpOxRm6zidakbtOi6gES8b/hXJMB8GA1UdIwQYMBaA
+FOxf66sqHHE1R1603Q1Qlh0+AAKrMA0GCSqGSIb3DQEBCwUAA4IBAQBoKCc9kUA5
+7eF17jSZyxEFzHutj0MyHXr3AXEon7DbNwXe4Ps8xzNpYhU04cesMtA0Zj23cidP
+hSvkx0b3/43LhagPdQtamUgvv7InxRcp+tl9763ZmK0yBp/paP8B3KEg/KzEeZgY
+RQMUtZJ9beJEvYGfvmP+IekjFIIt8eM16e+W27B1awWe3UJinvVkX7EAm5QLffH9
+HsEBr263LQozr/wKuGfh0KF3n4J/U6adcq7F78W+zq0aRddn07rfobsqwtXpwN0Q
+qObhJK4OEFWYudusygaRD0iNoXyji1xFw2p+E7mzxYGQKtY7ZKQAvfN9VLn7y8jH
+E08cuBB1FyWh
+-----END CERTIFICATE-----
