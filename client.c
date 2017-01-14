@@ -20,23 +20,25 @@
 int
 SSL_CTX_use_PrivateKey_file_pass(SSL_CTX *ctx,char *filename,char *pass)
 {
-       EVP_PKEY     *pkey=NULL;
-       BIO               *key=NULL;
+       BIO      *key=NULL;
+       EVP_PKEY *pkey=NULL;
 
-       key=BIO_new(BIO_s_file());
-       BIO_read_filename(key,filename);
-       pkey=PEM_read_bio_PrivateKey(key,NULL,NULL,pass);
-       if(pkey==NULL)
-       {
+       key = BIO_new(BIO_s_file());
+       BIO_read_filename(key, filename);
+
+       pkey=PEM_read_bio_PrivateKey(key, NULL, NULL, pass);
+       if(pkey == NULL) {
               printf("PEM_read_bio_PrivateKey err");
               return -1;
        }
-       if (SSL_CTX_use_PrivateKey(ctx,pkey) <= 0)
-       {
+
+       if (SSL_CTX_use_PrivateKey(ctx,pkey) <= 0) {
               printf("SSL_CTX_use_PrivateKey err\n");
               return -1;
        }
+
        BIO_free(key);
+
        return 1;
 }
 
@@ -60,8 +62,7 @@ int main(int argc, char *argv[]) {
 	exit(1);
     }
   
-    memcpy(
-	memcpy(hostport, argv[0], strlen(argv[0])), argv[1], strlen(argv[1]));
+    memcpy(memcpy(hostport, argv[0], strlen(argv[0])), argv[1], strlen(argv[1]));
 
     ERR_load_crypto_strings();
     SSL_load_error_strings();
