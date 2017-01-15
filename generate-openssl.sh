@@ -3,28 +3,27 @@
 cd "$( dirname "${BASH_SOURCE[0]}" )"
 cd fixtures
 
-SUBJECT="/C=US/ST=California/L=Mountain View/O=Blackbox Inc"
+SUBJECT="/C=US/ST=California/L=Mountain View/O=BlackBox Inc"
 SUBJECT_CN="$SUBJECT/CN=$DOMAIN"
 
-openssl genrsa -des3 -out server.key 2048
-openssl rsa -in server.key -out server.key
+PASSWORD=${PASSWORD:-blackbox}
 
-openssl req -new -subj "$SUBJECT/CN=server" -key server.key -out server.csr
+openssl genrsa -des3 -passout "pass:$PASSWORD" -out server.key 2048
+openssl rsa -passin "pass:$PASSWORD" -in server.key -out server.unsecure.key
+openssl req -passin "pass:$PASSWORD" -new -subj "$SUBJECT/CN=server" -key server.key -out server.csr
 
-openssl genrsa -des3 -out client.key 2048
-openssl req -new -subj "$SUBJECT/CN=client" -key client.key -out client.csr
 
-openssl req -new -x509 -subj "$SUBJET/CN=ca"  -keyout ca.key -out ca.crt
+openssl genrsa -des3 -passout "pass:$PASSWORD" -out client.key 2048
+openssl rsa -passin "pass:$PASSWORD" -in client.key -out client.unsecure.key
+openssl req -passin "pass:$PASSWORD" -new -subj "$SUBJECT/CN=client" -key client.key -out client.csr
 
-rm -rf /etc/pki/CA/index.txt
-rm -rf /etc/pki/CA/serial
-touch /etc/pki/CA/{index.txt,serial}
-echo 01 > /etc/pki/CA/serial
 
-openssl ca  -policy policy_anything -days 1460 -in server.csr -out server.crt -cert ca.crt -keyfile ca.key
-openssl ca  -policy policy_anything -days 1460 -in client.csr -out client.crt -cert ca.crt -keyfile ca.key
+openssl req -passin "pass:$PASSWORD" -passout "pass:$PASSWORD" -new -x509 -subj "$SUBJET/CN=ca"  -keyout ca.key -out ca.crt
+openssl x509 -req -sha256 -days 30650 -passin "pass:$PASSWORD" -in client.csr  -CA ca.crt -CAkey ca.key -set_serial 1 -out client.crt
+openssl x509 -req -sha256 -days 30650 -passin "pass:$PASSWORD" -in client.csr  -CA ca.crt -CAkey ca.key -set_serial 2 -out server.crt
 
-openssl pkcs12 -export -clcerts -in client.crt -inkey client.key -out client.p12
-openssl pkcs12 -export -in client.crt -inkey client.key -out  client.pfx
+
+openssl pkcs12 -passin "pass:$PASSWORD" -passout "pass:$PASSWORD" -export -clcerts -in client.crt -inkey client.key -out client.p12
+openssl pkcs12 -passin "pass:$PASSWORD" -passout "pass:$PASSWORD" -export -in client.crt -inkey client.key -out  client.pfx
 openssl x509 -in client.crt -out client.cer
 openssl x509 -in server.crt -out server.cer

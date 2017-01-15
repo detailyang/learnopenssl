@@ -44,7 +44,6 @@ SSL_CTX_use_PrivateKey_file_pass(SSL_CTX *ctx,char *filename,char *pass)
 
 
 int main(int argc, char *argv[]) {
-    int        		 len = 4;
     int        		 i;
     BIO       		*bio, *out;
     SSL       		*ssl;
@@ -57,12 +56,12 @@ int main(int argc, char *argv[]) {
     STACK_OF(X509_NAME) *sk2;
     const SSL_CIPHER 	*c;
 
-    if (argc < 2) {
+    if (argc < 3) {
 	printf("Usage: ./client host port\r\n");	
 	exit(1);
     }
   
-    memcpy(memcpy(hostport, argv[0], strlen(argv[0])), argv[1], strlen(argv[1]));
+    sprintf(hostport, "%s:%s", argv[1], argv[2]);
 
     ERR_load_crypto_strings();
     SSL_load_error_strings();
@@ -78,7 +77,7 @@ int main(int argc, char *argv[]) {
 	exit(1);
     }
 
-    if (!SSL_CTX_load_verify_locations(ctx, "/data/ssl/tmp/ca.crt", NULL)) {
+    if (!SSL_CTX_load_verify_locations(ctx, "./fixtures/ca.crt", NULL)) {
 	printf("load ca certificate error");
 	exit(1);
     }
@@ -92,12 +91,14 @@ int main(int argc, char *argv[]) {
 	dd("use client certificate error");
 	exit(1);
     }
-    if (!SSL_use_PrivateKey_file(ssl, "./fixtures/client.key", SSL_FILETYPE_PEM)) {
+
+    if (!SSL_use_PrivateKey_file(ssl, "./fixtures/client.unsecure.key", SSL_FILETYPE_PEM)) {
 	dd("use client key error");
 	exit(1);
     }
 
-    BIO_set_conn_hostname(bio, "127.0.0.1:4433");
+	printf("%s\r\n", hostport);
+    BIO_set_conn_hostname(bio, hostport);
 
     if (BIO_do_connect(bio) <= 0) {
 	dd("bio connection error");

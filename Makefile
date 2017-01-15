@@ -1,5 +1,5 @@
 CC := cc
-CFLAGS := -g -lssl -lcrypto
+CFLAGS := -g -Wall -lssl -lcrypto
 LINK := $(CC)
 INCS := 
 
