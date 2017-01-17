@@ -2,7 +2,7 @@
 * @Author: detailyang
 * @Date:   2017-01-14 20:21:55
 * @Last Modified by:   detailyang
-* @Last Modified time: 2017-01-14 20:22:00
+* @Last Modified time: 2017-01-17 23:49:52
 */
 
 #include <openssl/bio.h>
@@ -57,10 +57,10 @@ int main(int argc, char *argv[]) {
     const SSL_CIPHER 	*c;
 
     if (argc < 3) {
-	printf("Usage: ./client host port\r\n");	
+	printf("Usage: ./client host port\r\n");
 	exit(1);
     }
-  
+
     sprintf(hostport, "%s:%s", argv[1], argv[2]);
 
     ERR_load_crypto_strings();
@@ -81,11 +81,11 @@ int main(int argc, char *argv[]) {
 	printf("load ca certificate error");
 	exit(1);
     }
-    
+
     out = BIO_new_fp(stdout, BIO_NOCLOSE);
     bio = BIO_new_ssl_connect(ctx);
     BIO_get_ssl(bio, &ssl);
-    SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY); 
+    SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
 
     if (!SSL_use_certificate_file(ssl, "./fixtures/client.crt", SSL_FILETYPE_PEM)) {
 	dd("use client certificate error");
@@ -106,8 +106,8 @@ int main(int argc, char *argv[]) {
     }
 
     if(SSL_get_verify_result(ssl) != X509_V_OK) {
-	printf("server certificate verify error");
-	exit(1);
+	   printf("server certificate verify error\n");
+	   exit(1);
     }
 
     printf("server certificate verify success\n");
