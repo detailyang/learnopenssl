@@ -339,14 +339,27 @@ while True:
                 print('Client Hello Extensions SNI: {0}'.format("".join([chr(i) for i in sni_hostname])))
 
                 odd = odd[sni_hostname_len:]
-            else:
-                if et_len != 0 and etMap[et] == 'SessionTicket TLS':
+            else if et_len != 0 and etMap[et] == 'SessionTicket TLS':
                     st_len = unpack('!H', odd[:2])
                     print('Client Hello Extensions Session Ticket Length: {0}'.format(st_len))
                     odd = odd[2:]
 
                     data = unpack('!' + str(st_len) + 'B', odd[:st_len])
                     print('Client Hello Extensions Session Ticket: {0}'.format(data))
+           else if et_len != 0 and etMap[et]  == 'application_layer_protocol_negotiation':
+                    alpn_len = unpack('!H', odd[:2])
+                    print('Cilent Hello Extensions ALPN Length: {0}'.format(alpn_len))
+                    odd = odd[2:]
+
+                    alpn = unpack('!' + str(alpn_len) + 'B', odd[:alpn_len])
+                    while alpn_len > 0:
+                        alpn_str_len, = unpack('!B', alpn[:1])
+                        print('Client Hello Extensions ALPN String Length: {0}'.format(alpn_str_len))
+                        alpn_str = unpack('!' + str(alpn_str_len) + 'B', alpn[:alpn_str_len])
+                        print('Client Hello Extensions ALPN: {0}'.format(alpn_str))
+
+                        alpn_len = alpn_len - alpn_str_len
+            else:
                 break
 
 
