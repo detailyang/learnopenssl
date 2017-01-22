@@ -194,6 +194,17 @@ cipherMap = {
     (0x00,0xB7): 'TLS_RSA_PSK_WITH_AES_256_CBC_SHA384',
     (0x00,0xB8): 'TLS_RSA_PSK_WITH_NULL_SHA256',
     (0x00,0xB9): 'TLS_RSA_PSK_WITH_NULL_SHA384',
+    ( 0x00,0x41 ): 'TLS_RSA_WITH_CAMELLIA_128_CBC_SHA',
+    ( 0x00,0x42 ): 'TLS_DH_DSS_WITH_CAMELLIA_128_CBC_SHA',
+    ( 0x00,0x43 ): 'TLS_DH_RSA_WITH_CAMELLIA_128_CBC_SHA',
+    ( 0x00,0x44 ): 'TLS_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA',
+    ( 0x00,0x45 ): 'TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA',
+    ( 0x00,0x46 ): 'TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA',
+    ( 0x00,0x84 ): 'TLS_RSA_WITH_CAMELLIA_256_CBC_SHA',
+    ( 0x00,0x85 ): 'TLS_DH_DSS_WITH_CAMELLIA_256_CBC_SHA',
+    ( 0x00,0x86 ): 'TLS_DH_RSA_WITH_CAMELLIA_256_CBC_SHA',
+    ( 0x00,0x87 ): 'TLS_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA',
+    ( 0x00,0x88 ): 'TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA',
 }
 
 compressMap = {
@@ -311,7 +322,7 @@ while True:
 
             odd = odd[4:]
 
-            if etMap[et] == 'server_name':
+            if et_len != 0 and etMap[et] == 'server_name':
                 sni_len, = unpack('!H', odd[:2])
                 print('Client Hello Extensions SNI Length: {0}'.format(sni_len))
                 odd = odd[2:]
@@ -329,6 +340,13 @@ while True:
 
                 odd = odd[sni_hostname_len:]
             else:
+                if et_len != 0 and etMap[et] == 'SessionTicket TLS':
+                    st_len = unpack('!H', odd[:2])
+                    print('Client Hello Extensions Session Ticket Length: {0}'.format(st_len))
+                    odd = odd[2:]
+
+                    data = unpack('!' + str(st_len) + 'B', odd[:st_len])
+                    print('Client Hello Extensions Session Ticket: {0}'.format(data))
                 break
 
 
