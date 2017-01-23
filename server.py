@@ -230,7 +230,7 @@ etMap = {
     13: 'signature_algorithms',
     14: 'use_srtp',
     15: 'heartbeat',
-    16: 'application_layer_protocol_negotiation ',
+    16: 'application_layer_protocol_negotiation',
     17: 'status_request_v2  ',
     18: 'signed_certificate_timestamp   ',
     19: 'client_certificate_type',
@@ -251,7 +251,7 @@ s.listen(10240)
 
 while True:
     c, address = s.accept()
-    print("Receive new connection", address);
+    print("Receive new connection " + ":".join((str(i) for i in address)));
     data = c.recv(5)
     data = unpack('!BBBH', data)
     typ, major, minor, length = data[0], data[1], data[2], data[3]
@@ -316,13 +316,19 @@ while True:
         odd = odd[2:]
 
         while True:
+            if len(odd) == 0:
+                break
             et, et_len = unpack('!HH', odd[:4])
             print('Client Hello Extensions Type: {0}'.format(etMap[et]))
             print('Client Hello Extensions Length: {0}'.format(et_len))
 
             odd = odd[4:]
+            old_odd = odd
 
-            if et_len != 0 and etMap[et] == 'server_name':
+            if et_len == 0:
+                continue
+
+            if etMap[et] == 'server_name':
                 sni_len, = unpack('!H', odd[:2])
                 print('Client Hello Extensions SNI Length: {0}'.format(sni_len))
                 odd = odd[2:]
@@ -338,29 +344,33 @@ while True:
                 print('Client Hello Extensions SNI host name Length: {0}'.format(sni_hostname_len))
                 print('Client Hello Extensions SNI: {0}'.format("".join([chr(i) for i in sni_hostname])))
 
-                odd = odd[sni_hostname_len:]
-            else if et_len != 0 and etMap[et] == 'SessionTicket TLS':
-                    st_len = unpack('!H', odd[:2])
-                    print('Client Hello Extensions Session Ticket Length: {0}'.format(st_len))
-                    odd = odd[2:]
+    	    elif etMap[et] == 'SessionTicket TLS':
+                st_len = unpack('!H', odd[:2])
+                print('Client Hello Extensions Session Ticket Length: {0}'.format(st_len))
+                odd = odd[2:]
 
-                    data = unpack('!' + str(st_len) + 'B', odd[:st_len])
-                    print('Client Hello Extensions Session Ticket: {0}'.format(data))
-           else if et_len != 0 and etMap[et]  == 'application_layer_protocol_negotiation':
-                    alpn_len = unpack('!H', odd[:2])
-                    print('Cilent Hello Extensions ALPN Length: {0}'.format(alpn_len))
-                    odd = odd[2:]
+                data = unpack('!' + str(st_len) + 'B', odd[:st_len])
+                print('Client Hello Extensions Session Ticket: {0}'.format(data))
 
-                    alpn = unpack('!' + str(alpn_len) + 'B', odd[:alpn_len])
-                    while alpn_len > 0:
-                        alpn_str_len, = unpack('!B', alpn[:1])
-                        print('Client Hello Extensions ALPN String Length: {0}'.format(alpn_str_len))
-                        alpn_str = unpack('!' + str(alpn_str_len) + 'B', alpn[:alpn_str_len])
-                        print('Client Hello Extensions ALPN: {0}'.format(alpn_str))
+            elif etMap[et]  == 'application_layer_protocol_negotiation':
+                alpn_len, = unpack('!H', odd[:2])
+                print('Cilent Hello Extensions ALPN Length: {0}'.format(alpn_len))
+                odd = odd[2:]
 
-                        alpn_len = alpn_len - alpn_str_len
-            else:
-                break
+                alpn = unpack('!' + str(alpn_len) + 'B', odd[:alpn_len])
+                while alpn_len > 0:
+                    alpn_str_len = int(alpn[0])
+                    print('Client Hello Extensions ALPN String Length: {0}'.format(alpn_str_len))
+                    alpn_str = alpn[1:1+alpn_str_len]
+                    print('Client Hello Extensions ALPN: {0}'.format("".join(
+                        [chr(i) for i in alpn_str])))
 
+                    alpn_len = alpn_len - alpn_str_len - 1
 
+    	    else:
+                pass
 
+            odd = old_odd[et_len:]
+
+    print('')
+    print('Receive Client Hello Done')
