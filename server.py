@@ -1,6 +1,8 @@
 import socket
-from struct import unpack
+from struct import unpack, pack, pack_into
 from datetime import datetime
+from base64 import b64decode
+import time
 
 typMap = {
     20:  'change_cipher_spec',
@@ -244,6 +246,9 @@ etMap = {
     65281: 'renegotiation_info',
 }
 
+def to3bytes(x):
+    return (x >> 16, (x >> 8 & 0x00FF), x & 0x0000FF)
+
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 s.bind(('0.0.0.0', 443))
@@ -374,3 +379,94 @@ while True:
 
     print('')
     print('Receive Client Hello Done')
+
+    # struct {
+    #    ProtocolVersion server_version;
+    #    Random random;
+    #    SessionID session_id;
+    #    CipherSuite cipher_suite;
+    #    CompressionMethod compression_method;
+    #    select (extensions_present) {
+    #        case false:
+    #            struct {};
+    #        case true:
+    #            Extension extensions<0..2^16-1>;
+    #    };
+    # } ServerHello;
+
+    server_hello = pack('!BB', 3, 1)
+    server_hello += pack('!I', time.time())
+    server_hello += pack('!28B', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+        10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27)
+    server_hello += pack('!B', 0)
+    server_hello += pack('!2B', 0xC0, 0x14)
+    server_hello += pack('!B', 0x00)
+
+    # length
+    server_hello = pack('!3B', len(server_hello) >> 16,
+                        len(server_hello) >> 8 & 0x00FF,
+                        len(server_hello) & 0x0000FF) + server_hello
+    # type
+    server_hello = pack('!B', 2) + server_hello
+
+
+    # length
+    record_layer_hello = pack('!H', len(server_hello)) + server_hello
+    # version
+    record_layer_hello = pack('!BB', 3, 1) + record_layer_hello
+    # type
+    record_layer_hello = pack('!B', 22) + record_layer_hello
+
+    # opaque ASN.1Cert<1..2^24-1>;
+
+    # struct {
+    #     ASN.1Cert certificate_list<0..2^24-1>;
+    # } Certificate;
+
+    with open("./fixtures/server.crt", "r") as f:
+        crt = f.read()
+
+    crt = crt.replace('-----BEGIN CERTIFICATE-----\n', '').replace('\n-----END CERTIFICATE-----\n', '')
+    crt = b64decode(crt)
+    tmp = to3bytes(len(crt))
+
+    server_certificate = pack('!3B', tmp[0], tmp[1], tmp[2])
+    server_certificate += crt
+
+    server_certificate = pack('!3B', tmp[0], tmp[1], tmp[2]) + server_certificate
+
+    tmp = to3bytes(len(server_certificate))
+    server_certificate = pack('!3B', tmp[0], tmp[1], tmp[2]) + server_certificate
+    server_certificate = pack('!B', 11) + server_certificate
+
+    # length
+    record_layer_certificate = pack('!H', len(server_certificate)) + server_certificate
+    # version
+    record_layer_certificate = pack('!BB', 3, 1) + record_layer_certificate
+    # type
+    record_layer_certificate = pack('!B', 22) + record_layer_certificate
+
+    # struct {
+    #   select (KeyExchangeAlgorithm) {
+    #       case dh_anon:
+    #           ServerDHParams params;
+    #       case dhe_dss:
+    #       case dhe_rsa:
+    #           ServerDHParams params;
+    #           digitally-signed struct {
+    #               opaque client_random[32];
+    #               opaque server_random[32];
+    #               ServerDHParams params;
+    #           } signed_params;
+    #       case rsa:
+    #       case dh_dss:
+    #       case dh_rsa:
+    #           struct {} ;
+    #          /* message is omitted for rsa, dh_dss, and dh_rsa */
+    #       /* may be extended, e.g., for ECDH -- see [TLSECC] */
+    #   };
+    # } ServerKeyExchange;
+
+    # server_keyexchange =
+
+    c.send(record_layer_hello + record_layer_certificate)
