@@ -3,6 +3,14 @@ from struct import unpack, pack, pack_into
 from datetime import datetime
 from base64 import b64decode
 import time
+from Crypto import Random
+from Crypto.Hash import SHA
+from Crypto.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
+from Crypto.Signature import PKCS1_v1_5 as Signature_pkcs1_v1_5
+from Crypto.PublicKey import RSA
+from ecdsa import SigningKey
+import pyelliptic
+
 
 typMap = {
     20:  'change_cipher_spec',
@@ -246,6 +254,36 @@ etMap = {
     65281: 'renegotiation_info',
 }
 
+namedCurve = {
+    "sect163k1": 1,
+    "sect163r1": 2,
+    "sect163r2": 3,
+    "sect193r1": 4,
+    "sect193r2": 5,
+    "sect233k1": 6,
+    "sect233r1": 7,
+    "sect239k1": 8,
+    "sect283k1": 9,
+    "sect283r1": 10,
+    "sect409k1": 11,
+    "sect409r1": 12,
+    "sect571k1": 13,
+    "sect571r1": 14,
+    "secp160k1": 15,
+    "secp160r1": 16,
+    "secp160r2": 17,
+    "secp192k1": 18,
+    "secp192r1": 19,
+    "secp224k1": 20,
+    "secp224r1": 21,
+    "secp256k1": 22,
+    "secp256r1": 23,
+    "secp384r1": 24,
+    "secp521r1": 25,
+    "arbitrary_explicit_prime_curves": 0xFF01,
+    "arbitrary_explicit_char2_curves": 0xFF02,
+}
+
 def to3bytes(x):
     return (x >> 16, (x >> 8 & 0x00FF), x & 0x0000FF)
 
@@ -396,8 +434,9 @@ while True:
 
     server_hello = pack('!BB', 3, 1)
     server_hello += pack('!I', time.time())
-    server_hello += pack('!28B', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+    server_random = pack('!28B', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
         10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27)
+    server_hello += server_random
     server_hello += pack('!B', 0)
     server_hello += pack('!2B', 0xC0, 0x14)
     server_hello += pack('!B', 0x00)
@@ -467,6 +506,42 @@ while True:
     #   };
     # } ServerKeyExchange;
 
-    # server_keyexchange =
+    server_keyexchange = pack('!B', 3)
+    server_keyexchange += pack('!BB', (namedCurve['secp256r1'] & 0xFF00 > 8), namedCurve['secp256r1'] & 0x00FF)
+
+    # with open("./fixtures/rsa.pub") as f:
+    #     pub = f.read()
+    #     rsapub = RSA.importKey(pub)
+    #     pubkey = pub.replace('-----BEGIN PUBLIC KEY-----\n', '').replace('\n-----END PUBLIC KEY-----\n', '')
+    ecc = pyelliptic.ECC(curve='secp256k1')
+    pubkey = ecc.get_pubkey()
+    server_keyexchange += pack('!B', len(pubkey))
+    server_keyexchange += pubkey
+
+    #ServerKeyExchange.signed_params.sha_hash
+    #SHA(ClientHello.random + ServerHello.random +
+                                      #ServerKeyExchange.params);
+    with open("./fixtures/server.unsecure.key") as f:
+        key = f.read()
+    rsakey = RSA.importKey(key)
+    signer = Signature_pkcs1_v1_5.new(rsakey)
+    digest = SHA.new()
+    digest.update(random + server_random + server_keyexchange)
+    sign = signer.sign(digest)
+
+    server_keyexchange += pack('!BB', (len(sign) & 0xFF00 > 8), len(sign) & 0x00FF)
+    server_keyexchange += sign
+
+    server_keyexchange = pack('!3B', len(server_keyexchange) >> 16,
+                                (len(server_keyexchange) >> 8) & 0x00FF,
+                                len(server_keyexchange) & 0x0000FF) + server_keyexchange
+    server_keyexchange = pack('!B', 12) + server_keyexchange
+
+
+    record_layer_server_keyexchange = pack('!H', len(server_keyexchange)) + server_keyexchange
+    record_layer_server_keyexchange = pack('!BB', 3, 1) + record_layer_server_keyexchange
+    record_layer_server_keyexchange = pack('!B', 22) + record_layer_server_keyexchange
+
 
     c.send(record_layer_hello + record_layer_certificate)
+    c.send(record_layer_server_keyexchange)
