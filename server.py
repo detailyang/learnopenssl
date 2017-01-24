@@ -462,16 +462,18 @@ while True:
     #     ASN.1Cert certificate_list<0..2^24-1>;
     # } Certificate;
 
-    with open("./fixtures/server.crt", "r") as f:
+    with open("./server.crt", "r") as f:
         crt = f.read()
 
     crt = crt.replace('-----BEGIN CERTIFICATE-----\n', '').replace('\n-----END CERTIFICATE-----\n', '')
+    # print(crt)
     crt = b64decode(crt)
     tmp = to3bytes(len(crt))
 
     server_certificate = pack('!3B', tmp[0], tmp[1], tmp[2])
     server_certificate += crt
 
+    tmp = to3bytes(len(server_certificate))
     server_certificate = pack('!3B', tmp[0], tmp[1], tmp[2]) + server_certificate
 
     tmp = to3bytes(len(server_certificate))
@@ -542,6 +544,10 @@ while True:
     record_layer_server_keyexchange = pack('!BB', 3, 1) + record_layer_server_keyexchange
     record_layer_server_keyexchange = pack('!B', 22) + record_layer_server_keyexchange
 
+    server_hellodone = pack('!B3B', 14, 0, 0, 0)
 
-    c.send(record_layer_hello + record_layer_certificate)
-    c.send(record_layer_server_keyexchange)
+    record_layer_server_hellodone = pack('!H', len(server_hellodone)) + server_hellodone
+    record_layer_server_hellodone = pack('!BB', 3, 1) + record_layer_server_hellodone
+    record_layer_server_hellodone = pack('!B', 22) + record_layer_server_hellodone
+
+    c.send(record_layer_hello + record_layer_certificate + record_layer_server_keyexchange + record_layer_server_hellodone)
