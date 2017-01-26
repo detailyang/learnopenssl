@@ -30,8 +30,10 @@ msgTypMap = {
     2: 'server_hello',
     11: 'certificate',
     12: 'server_key_exchange',
-    15: 'certificate_request',
-    16: 'server_hello_done',
+    13: 'certificate_request',
+    14: 'server_hello_done',
+    15: 'certificate_verify',
+    16: 'client_key_exchange',
     20: 'finished'
 }
 
@@ -294,7 +296,7 @@ s.listen(10240)
 
 while True:
     c, address = s.accept()
-    print("Receive new connection " + ":".join((str(i) for i in address)));
+    print("Receive new connection " + ":".join((str(i) for i in address)))
     data = c.recv(5)
     data = unpack('!BBBH', data)
     typ, major, minor, length = data[0], data[1], data[2], data[3]
@@ -339,7 +341,10 @@ while True:
 
         cipher_suites = unpack('!' + str(cipher_suites_len) + 'B', fragment[41: 41 + cipher_suites_len])
         for i in range(0, cipher_suites_len, 2):
-            print('Client Hello Cipher Suite: {0}'.format(cipherMap[(cipher_suites[i], cipher_suites[i+1])]))
+            if (cipher_suites[i], cipher_suites[i+1]) not in cipherMap:
+                print('Client Hello Cipher Suite: Unknow')
+            else:
+                print('Client Hello Cipher Suite: {0}'.format(cipherMap[(cipher_suites[i], cipher_suites[i+1])]))
 
         odd = fragment[41 + cipher_suites_len:]
 
@@ -438,7 +443,8 @@ while True:
         10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27)
     server_hello += server_random
     server_hello += pack('!B', 0)
-    server_hello += pack('!2B', 0xC0, 0x14)
+    # cipher suites
+    server_hello += pack('!2B', 0x00, 0x04)
     server_hello += pack('!B', 0x00)
 
     # length
@@ -550,4 +556,29 @@ while True:
     record_layer_server_hellodone = pack('!BB', 3, 1) + record_layer_server_hellodone
     record_layer_server_hellodone = pack('!B', 22) + record_layer_server_hellodone
 
-    c.send(record_layer_hello + record_layer_certificate + record_layer_server_keyexchange + record_layer_server_hellodone)
+    c.send(record_layer_hello + record_layer_certificate
+            # + record_layer_server_keyexchange
+            + record_layer_server_hellodone)
+
+    print("Receive new client key exchange");
+    data = c.recv(5)
+    data = unpack('!BBBH', data)
+    typ, major, minor, length = data[0], data[1], data[2], data[3]
+    print('type: {0}'.format(typMap[typ]))
+    print('version: {0}'.format(verMap[(major, minor)]))
+    print('length: {0}'.format(length))
+
+    fragment = c.recv(length)
+    odd = fragment
+
+    msg_type, len1, len2, len3 = unpack('!BBBB', fragment[:4])
+    print('Handshake type: {0}'.format(msgTypMap[msg_type]))
+    print('Handshake length: {0}'.format(len1 * 65536 + len2 * 256 + len3))
+
+    odd = odd[4:]
+
+    pm_len, = unpack("!H", odd[:2])
+    print('Handshake Client Key Exchange PreMaster Length: {0}'.format(pm_len))
+    odd = odd[2:]
+    pm = unpack('!' + str(pm_len) + 'B', odd)
+    print('Handshake Client Key Exchange PreMaster: {0}'.format("".join([str(i) for i in pm])))
