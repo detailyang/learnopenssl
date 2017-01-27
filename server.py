@@ -8,6 +8,7 @@ from Crypto.Hash import SHA
 from Crypto.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
 from Crypto.Signature import PKCS1_v1_5 as Signature_pkcs1_v1_5
 from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
 from ecdsa import SigningKey
 import pyelliptic
 
@@ -289,6 +290,37 @@ namedCurve = {
 def to3bytes(x):
     return (x >> 16, (x >> 8 & 0x00FF), x & 0x0000FF)
 
+def encode_rsa(message, key_path):
+    key = RSA.importKey(open(key_path).read())
+    cipher = PKCS1_OAEP.new(key)
+    ciphertext = cipher.encrypt(message)
+    return ciphertext
+
+def decode_rsa(ciphertext, key_path):
+    key = RSA.importKey(open(key_path).read())
+    # cipher = PKCS1_OAEP.new(key)
+    # before decrypt convert the hex string to byte_array
+    # print(ciphertext)
+    message = key.decrypt(ciphertext)
+    return message
+
+def decode_rc4(data, key):
+    """RC4 encryption and decryption method."""
+    S, j, out = range(256), 0, []
+
+    for i in range(256):
+        j = (j + S[i] + ord(key[i % len(key)])) % 256
+        S[i], S[j] = S[j], S[i]
+
+    i = j = 0
+    for ch in data:
+        i = (i + 1) % 256
+        j = (j + S[i]) % 256
+        S[i], S[j] = S[j], S[i]
+        out.append(chr(ord(ch) ^ S[(S[i] + S[j]) % 256]))
+
+    return "".join(out)
+
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 s.bind(('0.0.0.0', 443))
@@ -468,7 +500,7 @@ while True:
     #     ASN.1Cert certificate_list<0..2^24-1>;
     # } Certificate;
 
-    with open("./server.crt", "r") as f:
+    with open("./fixtures/server.crt", "r") as f:
         crt = f.read()
 
     crt = crt.replace('-----BEGIN CERTIFICATE-----\n', '').replace('\n-----END CERTIFICATE-----\n', '')
@@ -581,4 +613,63 @@ while True:
     print('Handshake Client Key Exchange PreMaster Length: {0}'.format(pm_len))
     odd = odd[2:]
     pm = unpack('!' + str(pm_len) + 'B', odd)
+    with open("./pre_master_secret", "wb") as f:
+        f.write(odd)
     print('Handshake Client Key Exchange PreMaster: {0}'.format("".join([str(i) for i in pm])))
+    print('Handshake Client Key Exchange Master: {0}'.format(decode_rsa(pm, 'fixtures/server.unsecure.key')))
+
+    data = c.recv(5)
+    data = unpack('!BBBH', data)
+    typ, major, minor, length = data[0], data[1], data[2], data[3]
+    print('type: {0}'.format(typMap[typ]))
+    print('version: {0}'.format(verMap[(major, minor)]))
+    print('length: {0}'.format(length))
+
+    fragment = c.recv(length)
+    odd = fragment
+
+    data = c.recv(5)
+    data = unpack('!BBBH', data)
+    typ, major, minor, length = data[0], data[1], data[2], data[3]
+    print('type: {0}'.format(typMap[typ]))
+    print('version: {0}'.format(verMap[(major, minor)]))
+    print('length: {0}'.format(length))
+
+    fragment = c.recv(length)
+
+    # now it should be encrypt message
+    # msg_type, len1, len2, len3 = unpack('!BBBB', fragment[:4])
+    # print(msg_type, len1, len2, len3)
+    # print('Handshake type: {0}'.format(msgTypMap[msg_type]))
+    # print('Handshake length: {0}'.format(len1 * 65536 + len2 * 256 + len3))
+
+    # master_secret = PRF(pre_master_secret, "master secret",
+    #                     ClientHello.random + ServerHello.random)
+    #                     [0..47];
+
+    # c.write()
+
+    server_ticket = pack('!I', 300)
+    ticket = "abcde"
+    tmp = to3bytes(len(ticket))
+    server_ticket = server_ticket + pack('!H', len(ticket))
+    server_ticket = server_ticket + pack('!'+str(len(ticket)) + 'B',
+        ord('a'), ord('b'), ord('c'), ord('d'), ord('e'))
+
+    tmp = to3bytes(len(server_ticket))
+    server_ticket = pack('!3B', tmp[0], tmp[1], tmp[2]) + server_ticket
+    server_ticket = pack('!B', 4) + server_ticket
+
+    record_layer_server_ticket = pack('!H', len(server_ticket)) + server_ticket
+    record_layer_server_ticket = pack('!BB', 3, 1) + record_layer_server_ticket
+    record_layer_server_ticket = pack('!B', 22) + record_layer_server_ticket
+
+    server_change_cipher = pack('!B', 1)
+
+    record_layer_server_change_cipher = pack('!H', len(server_change_cipher)) + server_change_cipher
+    record_layer_server_change_cipher = pack('!BB', 3, 1) + record_layer_server_change_cipher
+    record_layer_server_change_cipher = pack('!B', 20) + record_layer_server_change_cipher
+
+    c.send(record_layer_server_ticket + record_layer_server_change_cipher)
+
+
